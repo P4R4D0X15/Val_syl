@@ -1,0 +1,15 @@
+type token =
+    TOP
+  | PARO
+  | PARF
+  | OU
+  | NON
+  | IMP
+  | ET
+  | EOF
+  | BOT
+  | ATOME of string
+val menhir_begin_marker : int
+val xv_form : Formule.formule
+val xv_f : Formule.formule
+val menhir_end_marker : int

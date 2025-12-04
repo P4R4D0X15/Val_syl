@@ -1,0 +1,14 @@
+open Proposition
+open Formule
+open FromString
+open Test
+open DedNat
+open DedNatTest
+open Predicats
+open Formule_Syllogisme
+open DiagVenn
+open Test_diag
+open Predicats
+open Enumerable
+open Formule
+open Test
