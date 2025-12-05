@@ -146,27 +146,39 @@ let temoins_incompatibilite_premisses_conc (ps : formule_syllogisme list)
 (* ***** Ajouts pour le projet ***** *)
 
 (** negate_diag d renvoie la négation du diagramme d*)
-let negate_diag (_ : diagramme) : diagramme list =
-  failwith "negate_diag : à faire"
+let negate_diag (d : diagramme) : diagramme list =
+  Diag.fold
+    (fun k v acc ->
+      match v with
+      | Vide -> Diag.singleton k NonVide :: acc
+      | NonVide -> Diag.singleton k Vide :: acc)
+    d []
 
 (** negate_diag_list ds renvoie la négation de la liste de diagrammes ds *)
-let negate_diag_list (_ : diagramme list) : diagramme list =
-  failwith "negate_diag_list : à faire"
+let negate_diag_list (ds : diagramme list) : diagramme list =
+  List.concat (List.map negate_diag ds)
 
 (** conj_diag_list ds1 ds2 renvoie la conjonction de deux listes de diagrammes
     ds1 et ds2 *)
-let conj_diag_list (_ : diagramme list) (_ : diagramme list) : diagramme list =
-  failwith "conj_diag_list : à faire"
+let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
+    diagramme list =
+  List.fold_left
+    (fun acc1 d1 ->
+      List.fold_left
+        (fun acc2 d2 ->
+          match conj_diag d1 d2 with Some d -> d :: acc2 | None -> acc2)
+        acc1 ds2)
+    [] ds1
 
 (** disj_of_diag_list ds1 ds2 renvoie la disjonction de deux listes de
     diagrammes ds1 et ds2 *)
-let disj_of_diag_list (_ : diagramme list) (_ : diagramme list) : diagramme list
-    =
-  failwith "disj_of_diag_list : à faire"
+let disj_of_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
+    diagramme list =
+    ds1 @ ds2
 
 (** diags_of_bool_comb alpha b renvoie la liste des diagrammes associés à la
     combinaison booléenne b de formules pour syllogismes, sur les prédicats
     issus de b ou de alpha *)
-let diags_of_bool_comb (_ : string list) (_ : boolCombSyllogismes) :
+let rec diags_of_bool_comb (alpha : string list) (b : boolCombSyllogismes) :
     diagramme list =
-  failwith "diags_of_bool_comb : à faire"
+  failwith "à faire"
