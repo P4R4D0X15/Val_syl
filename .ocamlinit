@@ -9,6 +9,5 @@ open Formule_Syllogisme
 open DiagVenn
 open Test_diag
 open Predicats
-open Enumerable
 open Formule
 open Test

@@ -16,7 +16,7 @@ module Diag = Map.Make (Predicate_set)
 type diagramme = fill Diag.t
 (** Type des diagrammes de Venn *)
 
-let string_of_fill = function Vide -> "Vide" | NonVide -> "Non Vide"
+let string_of_fill = function Vide -> "Vide" ^ "\n" | NonVide -> "Non Vide" ^ "\n"
 
 let string_of_predicate_set s =
   let elements = Predicate_set.elements s in
@@ -29,7 +29,7 @@ let string_of_predicate_set s =
 let string_of_diag (d : diagramme) : string =
   Diag.fold
     (fun pre fill acc ->
-      acc ^ string_of_predicate_set pre ^ " -> " ^ string_of_fill fill ^ "\n")
+      acc ^ string_of_predicate_set pre ^ " -> " ^ string_of_fill fill)
     d ""
 
 let list_faux (s : (string list * bool) list) : string list list =
