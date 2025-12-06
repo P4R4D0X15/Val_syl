@@ -12,8 +12,8 @@ let complete_diags (_ : diagramme) (_ : string list) : diagramme list =
 (** is_contradiction d1 d2 teste si les diagrammes d1 et d2 sont en
     contradiction, c'est-à-dire s'il existe une zone non-vide de d1 qui est vide
     dans d2 ou inversement *)
-let is_contradiction (_ : diagramme) (_ : diagramme) : bool =
-  failwith "is_contradiction : à faire"
+let is_contradiction (d1 : diagramme) (d2 : diagramme) : bool =
+  Diag.exists (fun pre v -> Diag.find pre d2 <> v) d1
 
 (** est_valid_premiss_conc b1 b2 teste si pour deux combinaisons booléennes de
     formules pour syllogismes b1 et b2, b1 valide b2*)
