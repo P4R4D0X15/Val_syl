@@ -6,7 +6,7 @@ open Formule_Syllogisme
     compléter. Par exemple, un diagramme défini par une contrainte vide sur une
     zone A pourrait être complété en considérant les zones définies par une
     liste d'atomes [A; B; C]. *)
-let complete_diags (_ : diagramme) (_ : string list) : diagramme list =
+let complete_diags (d : diagramme) (ats : string list) : diagramme list =
   failwith "afer"
 
 (** is_contradiction d1 d2 teste si les diagrammes d1 et d2 sont en
@@ -17,16 +17,16 @@ let is_contradiction (d1 : diagramme) (d2 : diagramme) : bool =
 
 (** est_valid_premiss_conc b1 b2 teste si pour deux combinaisons booléennes de
     formules pour syllogismes b1 et b2, b1 valide b2*)
-let rec est_valid_premiss_conc (b1 : boolCombSyllogismes)
+let est_valid_premiss_conc (b1 : boolCombSyllogismes)
     (b2 : boolCombSyllogismes) : bool =
-  let db1 = diags_of_bool_comb [] b1 and db2 = diags_of_bool_comb [] b2 in
-  List.exists (fun d1 -> List.exists (fun d2 -> is_contradiction d1 d2) db2) db1
+  let db1 = List.concat(List.map (fun d -> complete_diags d []) (diags_of_bool_comb [] b1)) 
+  and db2 = List.concat(List.map (fun d -> complete_diags d []) (diags_of_bool_comb [] b2)) in
+  List.exists (fun d1 -> List.exists (fun d2 -> not (is_contradiction d1 d2)) db2) db1
 
 (** temoins_invalidite_premisses_conc b1 b2 renvoie les diagrammes de la
     combinaison des prémisses b1 invalidant la conclusion b2 *)
 let temoins_invalidite_premisses_conc (b1 : boolCombSyllogismes)
     (b2 : boolCombSyllogismes) : diagramme list =
-  let db1 = diags_of_bool_comb [] b1 and db2 = diags_of_bool_comb [] b2 in
-  List.find_all
-    (fun d1 -> List.exists (fun d2 -> is_contradiction d1 d2) db2)
-    db1
+  let db1 = List.concat(List.map (fun d -> complete_diags d []) (diags_of_bool_comb [] b1)) 
+  and db2 = List.concat(List.map (fun d -> complete_diags d []) (diags_of_bool_comb [] b2)) in
+  List.find_all (fun d1 -> List.exists (fun d2 -> not (is_contradiction d1 d2)) db2) db1
