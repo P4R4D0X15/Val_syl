@@ -174,11 +174,21 @@ let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
     diagrammes ds1 et ds2 *)
 let disj_of_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
     diagramme list =
-    ds1 @ ds2
+  ds1 @ ds2
 
 (** diags_of_bool_comb alpha b renvoie la liste des diagrammes associés à la
     combinaison booléenne b de formules pour syllogismes, sur les prédicats
     issus de b ou de alpha *)
 let rec diags_of_bool_comb (alpha : string list) (b : boolCombSyllogismes) :
     diagramme list =
-  failwith "à faire"
+  match b with
+  | Vrai -> [ Diag.empty ]
+  | Faux -> []
+  | Base f -> diag_from_formule alpha f
+  | Et (b1, b2) ->
+      conj_diag_list (diags_of_bool_comb alpha b1) (diags_of_bool_comb alpha b2)
+  | Ou (b1, b2) ->
+      disj_of_diag_list
+        (diags_of_bool_comb alpha b1)
+        (diags_of_bool_comb alpha b2)
+  | Non b' -> negate_diag_list (diags_of_bool_comb alpha b')
