@@ -16,7 +16,9 @@ module Diag = Map.Make (Predicate_set)
 type diagramme = fill Diag.t
 (** Type des diagrammes de Venn *)
 
-let string_of_fill = function Vide -> "Vide" | NonVide -> "Non Vide"
+let string_of_fill = function
+  | Vide -> "Vide" ^ "\n"
+  | NonVide -> "Non Vide" ^ "\n"
 
 let string_of_predicate_set s =
   let elements = Predicate_set.elements s in
@@ -27,10 +29,18 @@ let string_of_predicate_set s =
 (** string_of_diag d : conversion d'un diagramme d en une chaine de caractères
 *)
 let string_of_diag (d : diagramme) : string =
-  Diag.fold
-    (fun pre fill acc ->
-      acc ^ string_of_predicate_set pre ^ " -> " ^ string_of_fill fill ^ "\n")
-    d ""
+  let f k fill acc =
+    match (fill, k) with
+    | Vide, k1 when Predicate_set.to_list k1 = [] -> "∅ -> Vide\n" ^ acc
+    | NonVide, k1 when Predicate_set.to_list k1 = [] -> "∅ -> NonVide\n" ^ acc
+    | Vide, k1 ->
+        "{" ^ String.concat "," (Predicate_set.to_list k1) ^ "} -> Vide\n" ^ acc
+    | NonVide, k1 ->
+        "{"
+        ^ String.concat "," (Predicate_set.to_list k1)
+        ^ "} -> Non Vide\n" ^ acc
+  in
+  Diag.fold f d ""
 
 let list_faux (s : (string list * bool) list) : string list list =
   let rec aux acc l =
@@ -91,17 +101,8 @@ let conj_diag (d1 : diagramme) (d2 : diagramme) : diagramme option =
 (** est_compatible_diag_diag dp dc : teste si le diagramme dp d'une prémisse est
     compatible avec le diagramme dc d'une conclusion *)
 let est_compatible_diag_diag (dp : diagramme) (dc : diagramme) : bool =
-  Diag.for_all
-    (fun key v1 ->
-      match Diag.find_opt key dc with
-      | None -> true
-      | Some v2 -> (
-          match (v1, v2) with
-          | Vide, Vide -> true
-          | NonVide, NonVide -> true
-          | Vide, NonVide -> false
-          | NonVide, Vide -> false))
-    dp
+  let conj = conj_diag dp dc in
+  if conj <> None then dc = Option.get conj else false
 
 (** est_compatible_diag_list dp dcs : teste si un diagramme dp d'une prémisse
     est compatible avec un des diagrammes de la liste dcs, diagrammes issus
@@ -126,22 +127,58 @@ let est_compatible_premisses_conc (ps : formule_syllogisme list)
   let dcs = diag_from_formule [] c in
   est_compatible_list_list dps dcs
 
+(** atomes_syl ps : renvoie la liste des atomes de la combinaison des premisses
+    ps *)
+let atomes_syl (ps : formule_syllogisme list) : string list =
+  List.sort_uniq String.compare
+    (List.fold_left
+       (fun acc p -> match p with IlExiste f | PourTout f -> acc @ atomes f)
+       [] ps)
+
+(** conj_diag_list ds1 ds2 renvoie la conjonction de deux listes de diagrammes
+    ds1 et ds2 *)
+let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
+    diagramme list =
+  List.fold_left
+    (fun acc1 d1 ->
+      List.fold_left
+        (fun acc2 d2 ->
+          match conj_diag d1 d2 with Some d -> d :: acc2 | None -> acc2)
+        acc1 ds2)
+    [] ds1
+
 (** temoin_incompatibilite_premisses_conc_opt ps c : renvoie un diagramme de la
     combinaison des prémisses ps incompatible avec la conclusion c s'il existe,
     None sinon *)
-let temoin_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
+let temoins_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
     (c : formule_syllogisme) : diagramme option =
-  let dps = ps |> List.map (fun p -> diag_from_formule [] p) |> List.concat in
+  let at_syl = atomes_syl ps in
+  let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
   let dcs = diag_from_formule [] c in
-  List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) dps
+  let comb_dps =
+    List.fold_left
+      (fun acc dp -> conj_diag_list acc dp)
+      (List.hd dps) (List.tl dps)
+  in
+  match
+    List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) comb_dps
+  with
+  | Some dp -> Some dp
+  | None -> None
 
 (** temoins_incompatibilite_premisses_conc ps c : renvoie les diagrammes de la
     combinaison des prémisses ps incompatibles avec la conclusion c *)
 let temoins_incompatibilite_premisses_conc (ps : formule_syllogisme list)
     (c : formule_syllogisme) : diagramme list =
-  let dps = ps |> List.map (fun p -> diag_from_formule [] p) |> List.concat in
+  let at_syl = atomes_syl ps in
+  let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
   let dcs = diag_from_formule [] c in
-  List.filter (fun dp -> not (est_compatible_diag_list dp dcs)) dps
+  let comb_dps =
+    List.fold_left
+      (fun acc dp -> conj_diag_list acc dp)
+      (List.hd dps) (List.tl dps)
+  in
+  List.filter (fun dp -> not (est_compatible_diag_list dp dcs)) comb_dps
 
 (* ***** Ajouts pour le projet ***** *)
 
@@ -157,18 +194,6 @@ let negate_diag (d : diagramme) : diagramme list =
 (** negate_diag_list ds renvoie la négation de la liste de diagrammes ds *)
 let negate_diag_list (ds : diagramme list) : diagramme list =
   List.concat (List.map negate_diag ds)
-
-(** conj_diag_list ds1 ds2 renvoie la conjonction de deux listes de diagrammes
-    ds1 et ds2 *)
-let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
-    diagramme list =
-  List.fold_left
-    (fun acc1 d1 ->
-      List.fold_left
-        (fun acc2 d2 ->
-          match conj_diag d1 d2 with Some d -> d :: acc2 | None -> acc2)
-        acc1 ds2)
-    [] ds1
 
 (** disj_of_diag_list ds1 ds2 renvoie la disjonction de deux listes de
     diagrammes ds1 et ds2 *)
