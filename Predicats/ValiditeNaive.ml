@@ -16,7 +16,6 @@ let complete_diags (d : diagramme) (ats : string list) : diagramme list =
           Predicate_set.empty at)
       (all_sublists ats)
   in
-  List.iter (fun p -> print_endline (string_of_predicate_set p)) pred;
   List.fold_left
     (fun diag p ->
       if not (List.exists (fun di -> Diag.mem p di) diag) then
