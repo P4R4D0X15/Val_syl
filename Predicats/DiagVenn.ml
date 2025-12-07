@@ -127,14 +127,13 @@ let est_compatible_premisses_conc (ps : formule_syllogisme list)
   let dcs = diag_from_formule [] c in
   est_compatible_list_list dps dcs
 
-(** temoin_incompatibilite_premisses_conc_opt ps c : renvoie un diagramme de la
-    combinaison des prémisses ps incompatible avec la conclusion c s'il existe,
-    None sinon *)
-let temoin_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
-    (c : formule_syllogisme) : diagramme option =
-  let dps = ps |> List.map (fun p -> diag_from_formule [] p) |> List.concat in
-  let dcs = diag_from_formule [] c in
-  List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) dps
+(** atomes_syl ps : renvoie la liste des atomes de la combinaison des premisses
+    ps *)
+let atomes_syl (ps : formule_syllogisme list) : string list =
+  List.sort_uniq String.compare
+    (List.fold_left
+       (fun acc p -> match p with IlExiste f | PourTout f -> acc @ atomes f)
+       [] ps)
 
 (** conj_diag_list ds1 ds2 renvoie la conjonction de deux listes de diagrammes
     ds1 et ds2 *)
@@ -148,12 +147,24 @@ let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
         acc1 ds2)
     [] ds1
 
-(** atomes_syl ps : renvoie la liste des atomes de la combinaison des premisses
-    ps *)
-let atomes_syl (ps : formule_syllogisme list) : string list =
-  List.sort_uniq String.compare (List.fold_left
-    (fun acc p -> match p with IlExiste f | PourTout f -> acc @ atomes f)
-    [] ps)
+(** temoin_incompatibilite_premisses_conc_opt ps c : renvoie un diagramme de la
+    combinaison des prémisses ps incompatible avec la conclusion c s'il existe,
+    None sinon *)
+let temoins_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
+    (c : formule_syllogisme) : diagramme option =
+  let at_syl = atomes_syl ps in
+  let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
+  let dcs = diag_from_formule [] c in
+  let comb_dps =
+    List.fold_left
+      (fun acc dp -> conj_diag_list acc dp)
+      (List.hd dps) (List.tl dps)
+  in
+  match
+    List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) comb_dps
+  with
+  | Some dp -> Some dp
+  | None -> None
 
 (** temoins_incompatibilite_premisses_conc ps c : renvoie les diagrammes de la
     combinaison des prémisses ps incompatibles avec la conclusion c *)
