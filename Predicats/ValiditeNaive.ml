@@ -7,7 +7,8 @@ open Formule_Syllogisme
     zone A pourrait être complété en considérant les zones définies par une
     liste d'atomes [A; B; C]. *)
 let complete_diags (d : diagramme) (ats : string list) : diagramme list =
-  failwith "afer"
+  let pred = List.map (fun a -> Predicate_set.add a Predicate_set.empty) ats in 
+  List.fold_left (fun diag p -> if not (List.for_all (fun di -> Diag.mem p di) diag) then (Diag.add p NonVide Diag.empty)::diag else diag) [d] pred
 
 (** is_contradiction d1 d2 teste si les diagrammes d1 et d2 sont en
     contradiction, c'est-à-dire s'il existe une zone non-vide de d1 qui est vide
