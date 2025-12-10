@@ -13,6 +13,9 @@ let p2 = PourTout (Imp (c, Ou (a, b)))
 let p3 = IlExiste a
 let c1 = IlExiste b
 
+let p4 = PourTout (Et (a, b))
+let p5 = PourTout (Et (Et (Imp (a, b), Imp(b, a)), Et(Imp(b, c), Imp(a, c))))
+
 (* b1 : pour tout x, a(x) ou b(x)*)
 let b1 = Base (PourTout (Ou (Atome "a", Atome "b")))
 (* b2 : (pour tout x, a(x)) ou (pour tout x, b(x)) *)
@@ -75,3 +78,8 @@ let test_boolCombSyllogisme (b1 : boolCombSyllogismes) (b2 : boolCombSyllogismes
   
   if not (resultNegation) then List.iter (fun dp -> print_endline(string_of_diag dp)) (temoins_invalidite_premisses_conc' b1 b2)
   ;;
+
+
+let test_complete_diags (p : formule_syllogisme) : unit = 
+  let compl = List.map (fun dp -> complete_diags dp ["a";"b";"c"]) (diag_from_formule [] p) in
+  List.iter (fun d -> print_endline (string_of_diag d)) (List.concat compl);;
