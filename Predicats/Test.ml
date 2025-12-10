@@ -12,6 +12,9 @@ let p2 = PourTout (Imp (c, Ou (a, b)))
 let p3 = IlExiste a
 let c1 = IlExiste b
 
+let p4 = PourTout (Et (a, b))
+let p5 = PourTout (Et (Et (Imp (a, b), Imp(b, a)), Et(Imp(b, c), Imp(a, c))))
+
 (* b1 : pour tout x, a(x) ou b(x)*)
 let b1 = Base (PourTout (Ou (Atome "a", Atome "b")))
 
