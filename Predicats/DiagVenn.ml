@@ -201,19 +201,30 @@ let disj_of_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
     diagramme list =
   ds1 @ ds2
 
+(** atomes_of_bool_comb b renvoie la liste des atomes associée à b **)
+let rec atomes_of_bool_comb (b : boolCombSyllogismes) : string list =
+  match b with
+  | Vrai -> []
+  | Faux -> []
+  | Base f -> ( match f with PourTout x -> atomes x | IlExiste x -> atomes x)
+  | Et (a, b) -> atomes_of_bool_comb a @ atomes_of_bool_comb b
+  | Ou (a, b) -> atomes_of_bool_comb a @ atomes_of_bool_comb b
+  | Non a -> atomes_of_bool_comb a
+
 (** diags_of_bool_comb alpha b renvoie la liste des diagrammes associés à la
     combinaison booléenne b de formules pour syllogismes, sur les prédicats
     issus de b ou de alpha *)
 let rec diags_of_bool_comb (alpha : string list) (b : boolCombSyllogismes) :
     diagramme list =
+  let all_atomes = List.sort_uniq compare (alpha@(atomes_of_bool_comb b)) in
   match b with
   | Vrai -> [ Diag.empty ]
   | Faux -> []
-  | Base f -> diag_from_formule alpha f
+  | Base f -> diag_from_formule all_atomes f
   | Et (b1, b2) ->
-      conj_diag_list (diags_of_bool_comb alpha b1) (diags_of_bool_comb alpha b2)
+      conj_diag_list (diags_of_bool_comb all_atomes b1) (diags_of_bool_comb all_atomes b2)
   | Ou (b1, b2) ->
       disj_of_diag_list
-        (diags_of_bool_comb alpha b1)
-        (diags_of_bool_comb alpha b2)
-  | Non b' -> negate_diag_list (diags_of_bool_comb alpha b')
+        (diags_of_bool_comb all_atomes b1)
+        (diags_of_bool_comb all_atomes b2)
+  | Non b' -> negate_diag_list (diags_of_bool_comb all_atomes b')
