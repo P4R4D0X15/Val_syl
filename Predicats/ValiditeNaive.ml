@@ -56,7 +56,7 @@ let est_valid_premiss_conc (b1 : boolCombSyllogismes) (b2 : boolCombSyllogismes)
     List.concat
       (List.map (fun d -> complete_diags d []) (diags_of_bool_comb [] b2))
   in
-  List.exists(fun d2 -> List.for_all (fun d1 -> is_contradiction d1 d2) db2) db1
+  not (List.exists(fun d2 -> List.for_all (fun d1 -> is_contradiction d1 d2) db2) db1)
 
 (** temoins_invalidite_premisses_conc b1 b2 renvoie les diagrammes de la
     combinaison des prémisses b1 invalidant la conclusion b2 *)
