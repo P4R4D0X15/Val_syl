@@ -86,17 +86,16 @@ let conj_diag (d1 : diagramme) (d2 : diagramme) : diagramme option =
         match (v1, v2) with
         | Some Vide, Some Vide -> Some (Some Vide)
         | Some NonVide, Some NonVide -> Some (Some NonVide)
-        | Some Vide, Some NonVide -> Some None  (* Incompatibilité *)
-        | Some NonVide, Some Vide -> Some None  (* Incompatibilité *)
+        | Some Vide, Some NonVide -> Some None (* Incompatibilité *)
+        | Some NonVide, Some Vide -> Some None (* Incompatibilité *)
         | Some v, None -> Some (Some v)
         | None, Some v -> Some (Some v)
         | None, None -> None)
       d1 d2
   in
   (* Vérifier s'il y a des incompatibilités (valeurs None) *)
-  if Diag.exists (fun _ v -> v = None) result then 
-    None
-  else 
+  if Diag.exists (fun _ v -> v = None) result then None
+  else
     (* Extraire les valeurs Some, on sait qu'il n'y a pas de None *)
     Some (Diag.filter_map (fun _ v -> v) result)
 
@@ -139,14 +138,16 @@ let atomes_syl (ps : formule_syllogisme list) : string list =
 
 (** conj_diag_list ds1 ds2 renvoie la conjonction de deux listes de diagrammes
     ds1 et ds2 *)
-let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) : diagramme list =
-  let cartesian_product = List.concat (List.map (fun a -> List.map (fun b -> (a, b)) ds2) ds1) in
+let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
+    diagramme list =
+  let cartesian_product =
+    List.concat (List.map (fun a -> List.map (fun b -> (a, b)) ds2) ds1)
+  in
   List.filter_map
     (fun (d1, d2) ->
       match conj_diag d1 d2 with
       | None -> None
-      | Some combined_diag -> Some combined_diag
-    )
+      | Some combined_diag -> Some combined_diag)
     cartesian_product
 
 (** temoin_incompatibilite_premisses_conc_opt ps c : renvoie un diagramme de la
@@ -185,24 +186,23 @@ let temoins_incompatibilite_premisses_conc (ps : formule_syllogisme list)
 
 (* ***** Ajouts pour le projet ***** *)
 
-let neg_reg (reg: fill) : fill = match reg with
-  | NonVide -> Vide
-  | Vide -> NonVide
+let neg_reg (reg : fill) : fill =
+  match reg with NonVide -> Vide | Vide -> NonVide
 
 (** negate_diag d renvoie la négation du diagramme d*)
 let negate_diag (d : diagramme) : diagramme list =
   if Diag.is_empty d then []
-  else Diag.fold (fun k v acc -> (Diag.singleton k (neg_reg v))::acc ) d []
-  
+  else Diag.fold (fun k v acc -> Diag.singleton k (neg_reg v) :: acc) d []
+
 (** negate_diag_list ds renvoie la négation de la liste de diagrammes ds *)
 let negate_diag_list (ds : diagramme list) : diagramme list =
   match ds with
   | [] -> [ Diag.empty ]
-  | ds -> 
+  | ds -> (
       let neg = List.map negate_diag ds in
       match neg with
       | [] -> []
-      | hd :: tl -> List.fold_left conj_diag_list hd tl
+      | hd :: tl -> List.fold_left conj_diag_list hd tl)
 
 (** disj_of_diag_list ds1 ds2 renvoie la disjonction de deux listes de
     diagrammes ds1 et ds2 *)

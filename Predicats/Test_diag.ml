@@ -22,8 +22,8 @@ let c2 = IlExiste c
 let c3 = IlExiste d
 
 (** test premisses conclusion : teste si chacun des diagrammes de la combinaison
-    de la liste prémisses est compatible avec au moins un des diagrammes de conclusion,
-    tout en traçant les calculs réalisés et les diagrammes calculés,
+    de la liste prémisses est compatible avec au moins un des diagrammes de
+    conclusion, tout en traçant les calculs réalisés et les diagrammes calculés,
     et en affichant tous les contre-exemples le cas échéant. *)
 let test (_ : formule_syllogisme list) (_ : formule_syllogisme) : unit =
   failwith "test : à faire"
