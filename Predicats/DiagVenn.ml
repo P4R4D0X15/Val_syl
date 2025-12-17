@@ -1,6 +1,4 @@
 open Formule_Syllogisme
-
-(* open Formule_Log_Prop *)
 open Proposition.Formule
 
 module Predicate_set = Set.Make (String)
@@ -152,19 +150,21 @@ let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
     None sinon *)
 let temoins_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
     (c : formule_syllogisme) : diagramme option =
-  let at_syl = atomes_syl ps in
-  let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
-  let dcs = diag_from_formule [] c in
-  let comb_dps =
-    List.fold_left
-      (fun acc dp -> conj_diag_list acc dp)
-      (List.hd dps) (List.tl dps)
-  in
-  match
-    List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) comb_dps
-  with
-  | Some dp -> Some dp
-  | None -> None
+  match ps with
+  | [] -> None (* Pas de prémisses = pas de témoin *)
+  | _ ->
+      let at_syl = atomes_syl ps in
+      let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
+      let dcs = diag_from_formule [] c in
+
+      (* Combinaison sécurisée *)
+      let comb_dps =
+        match dps with
+        | [] -> []
+        | hd :: tl -> List.fold_left (fun acc dp -> conj_diag_list acc dp) hd tl
+      in
+
+      List.find_opt (fun dp -> not (est_compatible_diag_list dp dcs)) comb_dps
 
 (** temoins_incompatibilite_premisses_conc ps c : renvoie les diagrammes de la
     combinaison des prémisses ps incompatibles avec la conclusion c *)
@@ -184,16 +184,23 @@ let temoins_incompatibilite_premisses_conc (ps : formule_syllogisme list)
 
 (** negate_diag d renvoie la négation du diagramme d*)
 let negate_diag (d : diagramme) : diagramme list =
-  Diag.fold
-    (fun k v acc ->
-      match v with
-      | Vide -> Diag.singleton k NonVide :: acc
-      | NonVide -> Diag.singleton k Vide :: acc)
-    d []
+  if Diag.is_empty d then []
+  else
+    Diag.fold
+      (fun k v acc ->
+        match v with
+        | Vide -> Diag.singleton k NonVide :: acc
+        | NonVide -> Diag.singleton k Vide :: acc)
+      d []
 
 (** negate_diag_list ds renvoie la négation de la liste de diagrammes ds *)
 let negate_diag_list (ds : diagramme list) : diagramme list =
-  List.concat (List.map negate_diag ds)
+  match ds with
+  | [] -> [ Diag.empty ]
+  | hd :: tl ->
+      List.fold_left
+        (fun acc d -> conj_diag_list acc (negate_diag d))
+        (negate_diag hd) tl
 
 (** disj_of_diag_list ds1 ds2 renvoie la disjonction de deux listes de
     diagrammes ds1 et ds2 *)
@@ -214,17 +221,16 @@ let rec atomes_of_bool_comb (b : boolCombSyllogismes) : string list =
 (** diags_of_bool_comb alpha b renvoie la liste des diagrammes associés à la
     combinaison booléenne b de formules pour syllogismes, sur les prédicats
     issus de b ou de alpha *)
-let rec diags_of_bool_comb (alpha : string list) (b : boolCombSyllogismes) :
+let diags_of_bool_comb (alpha : string list) (b : boolCombSyllogismes) :
     diagramme list =
-  let all_atomes = List.sort_uniq compare (alpha@(atomes_of_bool_comb b)) in
-  match b with
-  | Vrai -> [ Diag.empty ]
-  | Faux -> []
-  | Base f -> diag_from_formule all_atomes f
-  | Et (b1, b2) ->
-      conj_diag_list (diags_of_bool_comb all_atomes b1) (diags_of_bool_comb all_atomes b2)
-  | Ou (b1, b2) ->
-      disj_of_diag_list
-        (diags_of_bool_comb all_atomes b1)
-        (diags_of_bool_comb all_atomes b2)
-  | Non b' -> negate_diag_list (diags_of_bool_comb all_atomes b')
+  let all_atomes = List.sort_uniq compare (alpha @ atomes_of_bool_comb b) in
+  let rec aux b =
+    match b with
+    | Vrai -> [ Diag.empty ]
+    | Faux -> []
+    | Base f -> diag_from_formule all_atomes f
+    | Et (b1, b2) -> conj_diag_list (aux b1) (aux b2)
+    | Ou (b1, b2) -> disj_of_diag_list (aux b1) (aux b2)
+    | Non b' -> negate_diag_list (aux b')
+  in
+  aux b

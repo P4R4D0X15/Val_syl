@@ -7,7 +7,8 @@ open Formule_Syllogisme
 let est_valid_premiss_conc' (b1 : boolCombSyllogismes)
     (b2 : boolCombSyllogismes) : bool =
   let diags_b1 = diags_of_bool_comb [] b1 in
-  let diags_not_b2 = diags_of_bool_comb [] (Non b2) in
+  let diags_b2 = diags_of_bool_comb [] b2 in
+  let diags_not_b2 = negate_diag_list diags_b2 in
   let diags_b1_and_not_b2 = conj_diag_list diags_b1 diags_not_b2 in
   diags_b1_and_not_b2 = []
 
@@ -17,5 +18,6 @@ let est_valid_premiss_conc' (b1 : boolCombSyllogismes)
 let temoins_invalidite_premisses_conc' (b1 : boolCombSyllogismes)
     (b2 : boolCombSyllogismes) : diagramme list =
   let diags_b1 = diags_of_bool_comb [] b1 in
-  let diags_not_b2 = diags_of_bool_comb [] (Non b2) in
+  let diags_b2 = diags_of_bool_comb [] b2 in
+  let diags_not_b2 = negate_diag_list diags_b2 in
   conj_diag_list diags_b1 diags_not_b2
