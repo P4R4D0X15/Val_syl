@@ -38,7 +38,7 @@ let string_of_diag (d : diagramme) : string =
     | NonVide, k1 ->
         "{"
         ^ String.concat "," (Predicate_set.to_list k1)
-        ^ "} -> Non Vide\n" ^ acc
+        ^ "} -> NonVide\n" ^ acc
   in
   Diag.fold f d ""
 

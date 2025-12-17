@@ -1,85 +1,138 @@
-open DiagVenn
-open Proposition.Formule
+open OUnit2
 open Formule_Syllogisme
-open ValiditeNaive
-open ValiditeViaNegation
 
+(* p1 = ∀x (b(x) → a(x)) *)
+let p1 = Base (PourTout (Imp (Atome "b", Atome "a")))
 
-let a = Atome "a"
-let b = Atome "b"
-let c = Atome "c"
-let p1 = PourTout (Imp (Ou (a, b), c))
-let p2 = PourTout (Imp (c, Ou (a, b)))
-let p3 = IlExiste a
-let c1 = IlExiste b
+(* p2 = ∀x (a(x) → b(x)) *)
+let p2 = Base (PourTout (Imp (Atome "a", Atome "b")))
 
-let p4 = PourTout (Et (a, b))
-let p5 = PourTout (Et (Et (Imp (a, b), Imp(b, a)), Et(Imp(b, c), Imp(a, c))))
+(* p3 = ∃x (a(x) ∧ ¬b(x)) *)
+let p3 = Base (IlExiste (Et (Atome "a", Non (Atome "b"))))
 
-(* b1 : pour tout x, a(x) ou b(x)*)
-let b1 = Base (PourTout (Ou (Atome "a", Atome "b")))
-(* b2 : (pour tout x, a(x)) ou (pour tout x, b(x)) *)
-let b2 = Ou (Base (PourTout (Atome "a")), Base (PourTout (Atome "b")))
+(* p4 = ∀x (a(x) ∨ b(x)) *)
+let p4 = Base (PourTout (Ou (Atome "a", Atome "b")))
 
-let test (ps : formule_syllogisme list) (c : formule_syllogisme) : unit =
-  print_endline "Prémisses :";
-  List.iter (fun p -> print_endline (string_of_formule_syllogisme p)) ps;
+(* p5 = ∀x (a(x)) *)
+let p5 = Base (PourTout (Atome "a"))
 
-  print_endline "Conclusion :";
-  print_endline (string_of_formule_syllogisme c);
+(* p6 = ∀x (b(x)) *)
+let p6 = Base (PourTout (Atome "b"))
 
-  let dps = List.map (fun p -> diag_from_formule [ "a"; "b"; "c" ] p) ps in
-  print_endline "Diagramme de chaque prémisse :";
-  List.iter (fun d -> print_endline (string_of_diag d)) (List.concat dps);
+(* p7 = ∃x (a(x)) *)
+(* let p7 = Base (IlExiste (Atome "a")) *)
 
-  let comb_dps =
-    List.fold_left
-      (fun acc dp -> conj_diag_list acc dp)
-      (List.hd dps) (List.tl dps)
-  in
-  print_endline "Diagrammes de la combinaison :";
-  List.iter (fun d -> print_endline (string_of_diag d)) comb_dps;
+(* p8 = ∃x (b(x)) *)
+(* let p8 = Base (IlExiste (Atome "b")) *)
 
-  let dcs = diag_from_formule [ "a"; "b"; "c" ] c in
-  print_endline "Diagrammes de la conclusion :";
-  List.iter (fun d -> print_endline (string_of_diag d)) dcs;
+let string_eq (a : string) (b : string) = assert_equal a b ~printer:(fun a -> a)
 
-  let compatible = est_compatible_list_list comb_dps dcs in
+let bool_eq (a : bool) (b : bool) =
+  assert_equal a b ~printer:(fun a -> string_of_bool a)
 
-  if compatible then
-    print_endline "Les prémisses sont compatibles avec la conclusion."
-  else
-    let contre_exemples = temoins_incompatibilite_premisses_conc ps c in
-    print_endline
-      "Conclusion incompatible avec les diagrammes, contre-exemples :";
-    List.iter (fun d -> print_endline (string_of_diag d)) contre_exemples;
+module ValiditeNaiveTest = struct
+  open ValiditeNaive
+  open DiagVenn
 
-    print_endline "Test Complete Diags:\n";
-    (* let complete_dps = List.map (fun dp -> complete_diags dp ["a";"b";"c"]) (List.concat dps) in
-    List.iter (fun d -> print_endline (string_of_diag (d))) (List.concat complete_dps) *)
-    let compl_dp1 = List.map (fun dp -> complete_diags dp ["a";"b";"c"]) (diag_from_formule ["a";"b";"c"] p1) in
-    print_endline "-p1:\n";
-    List.iter (fun d -> print_endline (string_of_diag (d))) (diag_from_formule ["a";"b";"c"] p1);
-    print_endline "-Complete diag sur p1:\n";
-    List.iter (fun d -> print_endline (string_of_diag (d))) (List.concat compl_dp1);;
+  let tests =
+    "test suite for eval"
+    >::: [
+           (* ( "complete_diags" >:: fun _ -> *)
+             (* let d = Diag.empty in *)
+             (* let ats = [ "a" ] in *)
+             (* let result = complete_diags d ats in *)
+             (* string_eq *)
+               (* "∅->NonVide,{a}->NonVide|∅->NonVide,{a}->Vide|∅->Vide,{a}->NonVide|∅->Vide,{a}->Vide" *)
+               (* (String.concat "|" (List.map (fun s -> string_of_diag s) result)) *)
+           (* ); *)
+           ( "complete_diags2" >:: fun _ ->
+             let d = Diag.singleton Predicate_set.empty Vide in
+             let ats = [ "a" ] in
+             let result = complete_diags d ats in
+             string_eq "{a} -> Vide\n∅ -> Vide\n\n{a} -> Vide\n∅ -> NonVide\n"
+               (String.concat "\n" (List.map (fun s -> string_of_diag s) (List.rev result)))
+           );
+           ( "complete_diags3" >:: fun _ ->
+             let d = Diag.singleton (Predicate_set.singleton "a") Vide in
+             let ats = [ "a"; "b" ] in
+             let result = complete_diags d ats in
+             string_eq
+               "{b} -> NonVide\n{a,b} -> NonVide\n{a} -> Vide\n∅ -> NonVide\n\n{b} -> NonVide\n{a,b} -> Vide\n{a} -> Vide\n∅ -> NonVide\n\n{b} -> Vide\n{a,b} -> NonVide\n{a} -> Vide\n∅ -> NonVide\n\n{b} -> Vide\n{a,b} -> Vide\n{a} -> Vide\n∅ -> NonVide\n\n{b} -> NonVide\n{a,b} -> NonVide\n{a} -> Vide\n∅ -> Vide\n\n{b} -> NonVide\n{a,b} -> Vide\n{a} -> Vide\n∅ -> Vide\n\n{b} -> Vide\n{a,b} -> NonVide\n{a} -> Vide\n∅ -> Vide\n\n{b} -> Vide\n{a,b} -> Vide\n{a} -> Vide\n∅ -> Vide\n"
+               (String.concat "\n" (List.map (fun s -> string_of_diag s) (List.rev result)))
+           );
+           ( "complete_diags_all_complete" >:: fun _ ->
+             let d =
+               Diag.of_list
+                 [
+                   (Predicate_set.singleton "a", Vide);
+                   (Predicate_set.empty, NonVide);
+                 ]
+             in
+             let ats = [ "a" ] in
+             let result = complete_diags d ats in
+             string_eq "{a} -> NonVide\n∅ -> Vide\n"
+               (String.concat "\n" (List.map (fun s -> string_of_diag s) (List.rev result)))
+           );
+         ]
+end
 
-let test_boolCombSyllogisme (b1 : boolCombSyllogismes) (b2 : boolCombSyllogismes) : unit =
-  let db1s = diags_of_bool_comb ["a"; "b"; "c"] b1 in 
-  let db2s = diags_of_bool_comb ["a"; "b"; "c"] b2 in
-  print_endline "====== b1 = pour tout x, a(x) ou b(x) =======\n ";
-  List.iter (fun db1 -> print_endline (string_of_diag db1)) db1s; 
-  print_endline "====== b2 = (pour tout x, a(x)) ou (pour tout x, b(x)) =======\n ";
-  List.iter (fun db2 -> print_endline (string_of_diag db2)) db2s;
-  let resultNaive = est_valid_premiss_conc b1 b2 in 
-  let resultNegation = est_valid_premiss_conc' b1 b2 in 
-  print_endline ("======Validité Naive ======\nb1 valide b2 ? "^(string_of_bool resultNaive) ^"\n");
-  print_endline ("======Validité Via Negation ======\nb1 valide b2 ? "^(string_of_bool resultNegation )^"\n");
-  if not (resultNaive) then List.iter (fun dp -> print_endline(string_of_diag dp)) (temoins_invalidite_premisses_conc b1 b2); 
-  
-  if not (resultNegation) then List.iter (fun dp -> print_endline(string_of_diag dp)) (temoins_invalidite_premisses_conc' b1 b2)
-  ;;
+module DiagVennTest = struct
+  open DiagVenn
 
+  let tests =
+    "test suite for eval"
+    >::: [
 
-let test_complete_diags (p : formule_syllogisme) : unit = 
-  let compl = List.map (fun dp -> complete_diags dp ["a";"b";"c"]) (diag_from_formule [] p) in
-  List.iter (fun d -> print_endline (string_of_diag d)) (List.concat compl);;
+           ( "" >:: fun _ ->
+             let d : diagramme =
+               Diag.of_list
+                 [
+                   (Predicate_set.singleton "b", Vide);
+                   (Predicate_set.empty, Vide);
+                 ]
+             in
+             let n = negate_diag d in
+             string_eq "{b} -> NonVide\n\n∅ -> NonVide\n"
+               (String.concat "\n" (List.map (fun s -> string_of_diag s) n)) );
+           ( "" >:: fun _ ->
+             let d : diagramme =
+               Diag.of_list
+                 [
+                   (Predicate_set.singleton "a", Vide);
+                   (Predicate_set.empty, Vide);
+                 ]
+             in
+             let n = negate_diag d in
+             string_eq "{a} -> NonVide\n\n∅ -> NonVide\n"
+               (String.concat "\n" (List.map (fun s -> string_of_diag s ) n)) );
+         ]
+end
+
+module ValiditeViaNegTest = struct
+  open ValiditeViaNegation
+
+  let assert_est_valid premisse conclusion est_valid =
+    bool_eq est_valid (est_valid_premiss_conc' premisse conclusion)
+
+  let tests =
+    ""
+    >::: [
+           ( "Test 1 (p1 ?⊢ p2 ∨ (p1 ∧ p3)) " >:: fun _ ->
+             let premisse = p1 in
+             let conclusion = Ou (p2, Et (p1, p3)) in
+             assert_est_valid premisse conclusion true );
+           ( "Test 2 (p4 ?⊢ p5 ∨ p6)" >:: fun _ ->
+             let premisse = p4 in
+             let conclusion = Ou (p5, p6) in
+             assert_est_valid premisse conclusion false );
+         ]
+end
+
+let () =
+  run_test_tt_main
+    ("Global suite"
+    >::: [
+           ValiditeNaiveTest.tests;
+           DiagVennTest.tests;
+           ValiditeViaNegTest.tests;
+         ])
