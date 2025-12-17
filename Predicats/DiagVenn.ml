@@ -86,17 +86,15 @@ let conj_diag (d1 : diagramme) (d2 : diagramme) : diagramme option =
         match (v1, v2) with
         | Some Vide, Some Vide -> Some (Some Vide)
         | Some NonVide, Some NonVide -> Some (Some NonVide)
-        | Some Vide, Some NonVide -> Some None (* Incompatibilité *)
-        | Some NonVide, Some Vide -> Some None (* Incompatibilité *)
+        | Some Vide, Some NonVide -> Some None
+        | Some NonVide, Some Vide -> Some None
         | Some v, None -> Some (Some v)
         | None, Some v -> Some (Some v)
         | None, None -> None)
       d1 d2
   in
-  (* Vérifier s'il y a des incompatibilités (valeurs None) *)
   if Diag.exists (fun _ v -> v = None) result then None
   else
-    (* Extraire les valeurs Some, on sait qu'il n'y a pas de None *)
     Some (Diag.filter_map (fun _ v -> v) result)
 
 (** est_compatible_diag_diag dp dc : teste si le diagramme dp d'une prémisse est
@@ -156,7 +154,7 @@ let conj_diag_list (ds1 : diagramme list) (ds2 : diagramme list) :
 let temoins_incompatibilite_premisses_conc_opt (ps : formule_syllogisme list)
     (c : formule_syllogisme) : diagramme option =
   match ps with
-  | [] -> None (* Pas de prémisses = pas de témoin *)
+  | [] -> None
   | _ ->
       let at_syl = atomes_syl ps in
       let dps = List.map (fun p -> diag_from_formule at_syl p) ps in
