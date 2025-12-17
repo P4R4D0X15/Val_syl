@@ -61,8 +61,8 @@ let test (ps : formule_syllogisme list) (c : formule_syllogisme) : unit =
     List.iter (fun d -> print_endline (string_of_diag (d))) (List.concat compl_dp1);;
 
 let test_boolCombSyllogisme (b1 : boolCombSyllogismes) (b2 : boolCombSyllogismes) : unit =
-  let db1s = diags_of_bool_comb ["a"; "b"; "c"] b1 in 
-  let db2s = diags_of_bool_comb ["a"; "b"; "c"] b2 in
+  let db1s = diags_of_bool_comb [] b1 in 
+  let db2s = diags_of_bool_comb [] b2 in
   print_endline "====== b1 = pour tout x, a(x) ou b(x) =======\n ";
   List.iter (fun db1 -> print_endline (string_of_diag db1)) db1s; 
   print_endline "====== b2 = (pour tout x, a(x)) ou (pour tout x, b(x)) =======\n ";
@@ -70,8 +70,10 @@ let test_boolCombSyllogisme (b1 : boolCombSyllogismes) (b2 : boolCombSyllogismes
   let resultNaive = est_valid_premiss_conc b1 b2 in 
   let resultNegation = est_valid_premiss_conc' b1 b2 in 
   print_endline ("======Validité Naive ======\nb1 valide b2 ? "^(string_of_bool resultNaive) ^"\n");
+
   print_endline ("======Validité Via Negation ======\nb1 valide b2 ? "^(string_of_bool resultNegation )^"\n");
+  print_endline ("====== Temoins invalidite premisses conc naive ====== ");
   if not (resultNaive) then List.iter (fun dp -> print_endline(string_of_diag dp)) (temoins_invalidite_premisses_conc b1 b2); 
-  
+  print_endline ("====== Temoins invalidite premisses conc via négation ====== ");
   if not (resultNegation) then List.iter (fun dp -> print_endline(string_of_diag dp)) (temoins_invalidite_premisses_conc' b1 b2)
   ;;
