@@ -49,7 +49,7 @@ module ValiditeNaiveTest = struct
              let d = Diag.singleton Predicate_set.empty Vide in
              let ats = [ "a" ] in
              let result = complete_diags d ats in
-             string_eq "{a} -> Vide\n∅ -> Vide\n\n{a} -> Vide\n∅ -> NonVide\n"
+             string_eq "{a} -> Vide\n∅ -> NonVide\n\n{a} -> Vide\n∅ -> Vide\n"
                (String.concat "\n" (List.map (fun s -> string_of_diag s) (List.rev result)))
            );
            ( "complete_diags3" >:: fun _ ->
