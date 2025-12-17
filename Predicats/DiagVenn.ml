@@ -184,6 +184,7 @@ let temoins_incompatibilite_premisses_conc (ps : formule_syllogisme list)
 
 (* ***** Ajouts pour le projet ***** *)
 
+(** neg_reg reg : renvoie le complementaire d'une zone **)
 let neg_reg (reg : fill) : fill =
   match reg with NonVide -> Vide | Vide -> NonVide
 
