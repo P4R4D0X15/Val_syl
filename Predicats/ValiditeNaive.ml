@@ -34,17 +34,15 @@ let complete_diags (d : diagramme) (ats : string list) : diagramme list =
     dans d2 ou inversement *)
 let is_contradiction (d1 : diagramme) (d2 : diagramme) : bool =
   let check_zone pre v1 =
-    try
-      let v2 = Diag.find pre d2 in
-      v1 <> v2
-    with Not_found -> false
+    match Diag.find_opt pre d2 with
+    | None -> false
+    | Some v2 -> v1 <> v2
   in
   let contradiction_d1_to_d2 = Diag.exists check_zone d1 in
   let check_zone_inverse pre v2 =
-    try
-      let v1 = Diag.find pre d1 in
-      v1 <> v2
-    with Not_found -> false
+    match Diag.find_opt pre d1 with
+    | None -> false
+    | Some v1 -> v2 <> v1
   in
   let contradiction_d2_to_d1 = Diag.exists check_zone_inverse d2 in
   contradiction_d1_to_d2 || contradiction_d2_to_d1
@@ -59,11 +57,11 @@ let temoins_invalidite_premisses_conc (b1 : boolCombSyllogismes)
   let db1 =
     List.concat_map
       (fun d -> complete_diags d atomes)
-      (diags_of_bool_comb [] b1)
+      (diags_of_bool_comb atomes b1)
   and db2 =
     List.concat_map
       (fun d -> complete_diags d atomes)
-      (diags_of_bool_comb [] b2)
+      (diags_of_bool_comb atomes b2)
   in
   List.filter
     (fun d1 -> List.for_all (fun d2 -> is_contradiction d1 d2) db2)
